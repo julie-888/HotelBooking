@@ -1,11 +1,24 @@
 using HotelBooking.EntityFramework;
+using HotelBooking.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<BookingDBContext>(x => x.UseSqlServer(builder.Configuration.GetConnectionString("BookingConnectionString")));
+var connectionString = builder.Configuration.GetConnectionString("BookingConnectionString") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<BookingDBContext>(options =>
+    options.UseSqlServer(connectionString));
+
+//builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+//    .AddEntityFrameworkStores<BookingDBContext>();
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+builder.Services
+    .AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
+   .AddEntityFrameworkStores<BookingDBContext>();
+builder.Services.AddDbContext<BookingDBContext>();
+
 
 var app = builder.Build();
 
@@ -21,11 +34,14 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseAuthentication();;
 
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapRazorPages();
 
 app.Run();
